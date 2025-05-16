@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Header } from '@/components/Header';
@@ -11,23 +10,35 @@ import { Button } from '@/components/ui/button';
 import { CustomerSupport } from '@/components/CustomerSupport';
 
 const fetchMasterAgents = async () => {
-  const {
-    data: uplines,
-    error: uplinesError
-  } = await supabase.from('agents').select(`
-      *,
-      agent_contacts (*)
-    `).in('type', ['site_admin', 'sub_admin', 'super_agent']);
-  if (uplinesError) throw uplinesError;
-  const {
-    data: masterAgents,
-    error: masterAgentsError
-  } = await supabase.from('agents').select(`
-      *,
-      agent_contacts (*)
-    `).eq('type', 'master_agent');
-  if (masterAgentsError) throw masterAgentsError;
-  return [...(masterAgents || []), ...(uplines || [])] as AgentWithContacts[];
+  try {
+    const {
+      data: uplines,
+      error: uplinesError
+    } = await supabase.from('agents').select(`
+        *,
+        agent_contacts (*)
+      `).in('type', ['site_admin', 'sub_admin', 'super_agent']);
+      
+    if (uplinesError) throw uplinesError;
+
+    const {
+      data: masterAgents,
+      error: masterAgentsError
+    } = await supabase.from('agents').select(`
+        *,
+        agent_contacts (*)
+      `).eq('type', 'master_agent');
+      
+    if (masterAgentsError) throw masterAgentsError;
+    
+    // Manually shuffle the master agents
+    const shuffledMasterAgents = masterAgents ? [...masterAgents].sort(() => Math.random() - 0.5) : [];
+    
+    return [...shuffledMasterAgents, ...(uplines || [])] as AgentWithContacts[];
+  } catch (error) {
+    console.error("Error fetching master agents:", error);
+    return [];
+  }
 };
 
 const MasterAgent = () => {

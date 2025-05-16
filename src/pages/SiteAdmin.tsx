@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Header } from '@/components/Header';
@@ -11,27 +10,34 @@ import { AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const fetchSiteAdmins = async () => {
-  const { data: siteAdmins, error: siteAdminsError } = await supabase
-    .from('agents')
-    .select(`
-      *,
-      agent_contacts (*)
-    `)
-    .eq('type', 'site_admin');
+  try {
+    const { data: siteAdmins, error: siteAdminsError } = await supabase
+      .from('agents')
+      .select(`
+        *,
+        agent_contacts (*)
+      `)
+      .eq('type', 'site_admin');
 
-  if (siteAdminsError) throw siteAdminsError;
+    if (siteAdminsError) throw siteAdminsError;
 
-  const { data: downlineAgents, error: downlineAgentsError } = await supabase
-    .from('agents')
-    .select(`
-      *,
-      agent_contacts (*)
-    `)
-    .in('type', ['sub_admin', 'super_agent', 'master_agent']);
+    const { data: downlineAgents, error: downlineAgentsError } = await supabase
+      .from('agents')
+      .select(`
+        *,
+        agent_contacts (*)
+      `)
+      .in('type', ['sub_admin', 'super_agent', 'master_agent']);
 
-  if (downlineAgentsError) throw downlineAgentsError;
+    if (downlineAgentsError) throw downlineAgentsError;
 
-  return [...(siteAdmins || []), ...(downlineAgents || [])] as AgentWithContacts[];
+    // Manually shuffle the site admins
+    const shuffledSiteAdmins = siteAdmins ? [...siteAdmins].sort(() => Math.random() - 0.5) : [];
+    return [...shuffledSiteAdmins, ...(downlineAgents || [])] as AgentWithContacts[];
+  } catch (error) {
+    console.error("Error fetching site admins:", error);
+    return [];
+  }
 };
 
 const SiteAdmin = () => {

@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Header } from '@/components/Header';
@@ -11,45 +10,53 @@ import { Button } from '@/components/ui/button';
 import { CustomerSupport } from '@/components/CustomerSupport';
 
 const fetchSuperAgents = async () => {
-  // First, fetch all potential uplines (site admins and sub admins)
-  const { data: uplines, error: uplinesError } = await supabase
-    .from('agents')
-    .select(`
-      *,
-      agent_contacts (*)
-    `)
-    .in('type', ['site_admin', 'sub_admin']);
+  try {
+    // First, fetch all potential uplines (site admins and sub admins)
+    const { data: uplines, error: uplinesError } = await supabase
+      .from('agents')
+      .select(`
+        *,
+        agent_contacts (*)
+      `)
+      .in('type', ['site_admin', 'sub_admin']);
 
-  if (uplinesError) throw uplinesError;
+    if (uplinesError) throw uplinesError;
 
-  // Then fetch super agents
-  const { data: superAgents, error: superAgentsError } = await supabase
-    .from('agents')
-    .select(`
-      *,
-      agent_contacts (*)
-    `)
-    .eq('type', 'super_agent');
+    // Then fetch super agents
+    const { data: superAgents, error: superAgentsError } = await supabase
+      .from('agents')
+      .select(`
+        *,
+        agent_contacts (*)
+      `)
+      .eq('type', 'super_agent');
 
-  if (superAgentsError) throw superAgentsError;
+    if (superAgentsError) throw superAgentsError;
 
-  // Finally fetch master agents (potential downlines)
-  const { data: masterAgents, error: masterAgentsError } = await supabase
-    .from('agents')
-    .select(`
-      *,
-      agent_contacts (*)
-    `)
-    .eq('type', 'master_agent');
+    // Finally fetch master agents (potential downlines)
+    const { data: masterAgents, error: masterAgentsError } = await supabase
+      .from('agents')
+      .select(`
+        *,
+        agent_contacts (*)
+      `)
+      .eq('type', 'master_agent');
 
-  if (masterAgentsError) throw masterAgentsError;
+    if (masterAgentsError) throw masterAgentsError;
 
-  // Combine all data for complete hierarchy information
-  return [
-    ...(superAgents || []), 
-    ...(uplines || []), 
-    ...(masterAgents || [])
-  ] as AgentWithContacts[];
+    // Manually shuffle the super agents
+    const shuffledSuperAgents = superAgents ? [...superAgents].sort(() => Math.random() - 0.5) : [];
+    
+    // Combine all data for complete hierarchy information
+    return [
+      ...shuffledSuperAgents, 
+      ...(uplines || []), 
+      ...(masterAgents || [])
+    ] as AgentWithContacts[];
+  } catch (error) {
+    console.error("Error fetching super agents:", error);
+    return [];
+  }
 };
 
 const SuperAgent = () => {

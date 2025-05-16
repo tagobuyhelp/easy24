@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { AgentWithContacts } from '@/types/agent';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -52,15 +51,17 @@ export const AgentTable = ({
 
   const currentPageType = title.includes('সুপার') ? 'super_agent' 
     : title.includes('মাস্টার') ? 'master_agent'
-    : title.includes('এডমিন') ? 'site_admin'
-    : title.includes('সাব') ? 'sub_admin'
+    : title.includes('সাইট এডমিন') ? 'site_admin'
+    : title.includes('সাব এডমিন') ? 'sub_admin'
     : null;
 
-  const agentsToDisplay = displayAgents || (currentPageType
-    ? agents.filter(agent => agent.type === currentPageType)
-    : filterSiteAdmins 
-      ? agents.filter(agent => agent.type !== 'site_admin')
-      : agents);
+  const agentsToDisplay = displayAgents && displayAgents.length > 0 
+    ? displayAgents
+    : currentPageType && agents && agents.length > 0
+      ? agents.filter(agent => agent.type === currentPageType)
+      : filterSiteAdmins && agents && agents.length > 0
+        ? agents.filter(agent => agent.type !== 'site_admin')
+        : agents || [];
   
   const getUplineInfo = (uplineId: string | null) => {
     if (!uplineId) return null;
@@ -126,20 +127,26 @@ export const AgentTable = ({
     return (
       <div className="container px-2 py-2">
         <h1 className="text-xl font-bold text-center text-white mb-3">{title}</h1>
-        <div className="space-y-3">
-          {agentsToDisplay.map((agent) => (
-            <AgentMobileView
-              key={agent.id}
-              agent={agent}
-              showUpline={showUpline}
-              isAuthenticated={isAuthenticated}
-              getUplineInfo={getUplineInfo}
-              onViewHierarchy={handleViewHierarchy}
-              onDelete={handleDelete2}
-              onComplaint={handleComplaint}
-            />
-          ))}
-        </div>
+        {agentsToDisplay.length > 0 ? (
+          <div className="space-y-3">
+            {agentsToDisplay.map((agent) => (
+              <AgentMobileView
+                key={agent.id}
+                agent={agent}
+                showUpline={showUpline}
+                isAuthenticated={isAuthenticated}
+                getUplineInfo={getUplineInfo}
+                onViewHierarchy={handleViewHierarchy}
+                onDelete={handleDelete2}
+                onComplaint={handleComplaint}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-lg">No agents found</p>
+          </div>
+        )}
 
         <AgentHierarchyModal
           open={isHierarchyModalOpen}
@@ -166,15 +173,21 @@ export const AgentTable = ({
     <div className="container py-8">
       <h1 className="text-2xl font-bold text-center text-white mb-8">{title}</h1>
       <div className="glass-card">
-        <AgentDesktopView
-          agents={agentsToDisplay}
-          showUpline={showUpline}
-          isAuthenticated={isAuthenticated}
-          getUplineInfo={getUplineInfo}
-          onViewHierarchy={handleViewHierarchy}
-          onDelete={handleDelete2}
-          onComplaint={handleComplaint}
-        />
+        {agentsToDisplay.length > 0 ? (
+          <AgentDesktopView
+            agents={agentsToDisplay}
+            showUpline={showUpline}
+            isAuthenticated={isAuthenticated}
+            getUplineInfo={getUplineInfo}
+            onViewHierarchy={handleViewHierarchy}
+            onDelete={handleDelete2}
+            onComplaint={handleComplaint}
+          />
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-lg">No agents found</p>
+          </div>
+        )}
       </div>
 
       <AgentHierarchyModal
